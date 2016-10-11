@@ -1,21 +1,22 @@
 # PowerShell-d00m
 [![Build status](https://ci.appveyor.com/api/projects/status/bygmowboomxrg1e3?svg=true)](https://ci.appveyor.com/project/doomjaw87/powershell-d00m)
 
-PowerShell module that doesn't really do much that would be considered directly **helpful**... but is entirely awesome.
+PowerShell module that doesn't really do much that would be considered directly *helpful*... but is entirely **awesome.**
 
 ## Get-d00mExcuse
 User: "Why is the network slow?"
 
-Admin: **Runs Get-d00mExcuse** "Ah yes, because of a 'Total Configuration Destruction'"
+Admin: _Runs Get-d00mExcuse_ "Ah yes, because of a 'Total Configuration Destruction'"
 
 User: "Sounds serious..."
 
-Admin: "Yes it is. Partly because of the **Runs Get-d00mExcuse** 'Serial Stack Lockout' you might've caused earlier this week."
+Admin: "Yes it is. Partly because of the _Runs Get-d00mExcuse_ 'Serial Stack Lockout' you might've caused earlier this week."
 
-Get [BOFH](https://en.wikipedia.org/wiki/Bastard_Operator_From_Hell)-style excuses all to your (small and miserable) hearts content!
+Get [BOFH](https://en.wikipedia.org/wiki/Bastard_Operator_From_Hell)-style excuses all to your (small, wreteched, and miserable) hearts content!
+It will even say them to you if you specify the -Speak parameter!
 
 ## New-d00mColorFlood
-This is entirely **useless**... but so darn pretty. Run it in a PowerShell console on another window and maximize it for __awesomeness__
+This is entirely __useless__... but so darn pretty. Run it in a PowerShell console on another window and maximize it for **awesomeness**
 
 ## Get-d00mSayThings
 I wrote this to entertain my kids. Give it a string and the computer will talk to you!
@@ -52,3 +53,6 @@ Disable the firewall rules and the registry keys to disallow all RDP connections
 
 ## Switch-d00mMouseButton
 My little son is oddly a lefty in a family of right-handed people. I wrote this to switch the mouse buttons on the fly so he can get his left-hand groove one with the mouse
+
+## Enable-d00mFirewallRuleGroup
+This function can enable the remote management-y firewall rule groups on computers
