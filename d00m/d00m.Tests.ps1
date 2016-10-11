@@ -1,4 +1,6 @@
-﻿Import-Module C:\github\P0w3rSh3ll\Modules\d00m\d00m.psm1 -Force
+﻿$root = Split-path $MyInvocation.MyCommand.Path -Parent
+
+Import-Module $root\d00m.psm1 -Force
 
 Describe "Get-d00mExcuse" {
     $number = Get-Random -Minimum 1 -Maximum 10 
@@ -38,10 +40,6 @@ Describe "Add-d00mChocolateyPackageSource" {
 
 Describe "New-d00mPassword" {
     $length = Get-Random -Minimum 5 -Maximum 10
-    It "Outputs a System.SecureString when specified" {
-        New-d00mPassword -AsSecureString | 
-            Should BeOfType SecureString
-    }
 
     It "Outputs a string by default" {
         New-d00mPassword | 
