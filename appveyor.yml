@@ -5,4 +5,4 @@ build:
  install:
     - cinst pester
     
-    - ps: . .\d00m\d00m.Tests.ps1
+    - ps: . .\d00m\d00m.Tests.ps1 -Test
