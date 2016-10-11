@@ -56,3 +56,6 @@ My little son is oddly a lefty in a family of right-handed people. I wrote this 
 
 ## Enable-d00mFirewallRuleGroup
 This function can enable the remote management-y firewall rule groups on computers
+
+## Rename-d00mRecycleBin
+This function will rename the Recycle Bin from the rather boring name of "Recycle Bin" to something more exciting... like maybe "Portal to Middle-Earth"?

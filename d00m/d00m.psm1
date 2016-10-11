@@ -1688,3 +1688,163 @@ function Enable-d00mFirewallRuleGroup
         Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
     }
 }
+
+
+<#
+.SYNOPSIS
+    Rename the Recycle Bin!
+
+.DESCRIPTION
+    Change a registry key to rename the Recycle Bin and then
+    restart the explorer process so that the change is reflected
+
+.PARAMETER ComputerName
+    The names of computers to change the name of the Recycle Bin
+
+.PARAMETER NewName
+    The new name of the Recycle Bin
+
+.PARAMETER Credential
+    Administrative credentials for the computers
+
+.EXAMPLE
+    Rename-d00mRecycleBin -ComputerName localhost -NewName 'Recycle Bin'
+
+    This example will change a registry key to rename the Recycle Bin to
+    the new name specified, Recycle Bin (maybe to change the name back from
+    changing it earlier), for the specified computer name, the local host, and
+    then restart the explorer process so that the change is reflected using
+    the default credentials
+
+.EXAMPLE
+    'Computer1', 'Computer2' | Rename-d00mRecycleBin -NewName 'Garbage'
+
+    This example will change a registry key to rename the Recycle Bin to
+    the new name specified, Garbage, for the piped in computer names, Computer1 
+    and Computer2, and then restart the explorer process so that the change
+    is reflected using the default credentials
+
+.EXAMPLE
+    $cred = Get-Credential
+    (Get-AdComputer -Filter {(enabled -eq 'true') -and (operatingsystem -like '*Windows*')}).Name | Rename-d00mRecycleBin -NewName 'Your hopes and dreams' -Credential $cred
+
+    This example will change a registry key to rename the Recycle Bin to
+    the new name specified, Your Hopes and Dreams, for all the computer names
+    piped in from the Get-AdComputer cmdlet, and then restart the explorer process
+    so that the changes are reflected using the specified credentials. Kind of a 
+    rude thing to do...
+#>
+function Rename-d00mRecycleBin
+{
+    [CmdletBinding()]
+    param
+    (
+        #Computer's recycle bin to rename
+        [Alias('name')]
+        [parameter(Mandatory,
+                   ValueFromPipeline,
+                   ValueFromPipelineByPropertyName)]
+        [string[]]$ComputerName,
+
+        #New Recycle Bin name
+        [parameter(Mandatory)]
+        [string]$NewName,
+
+        [parameter()]
+        [pscredential]$Credential
+    )
+
+    begin
+    {
+        $timer = New-Object -TypeName System.Diagnostics.StopWatch
+        $cmdletName = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-Verbose -Message ('{0} : Begin execution : {1}' -f $cmdletName, (Get-Date))
+        $timer.Start()
+    }
+
+    process
+    {
+        $computerTimer = New-Object -TypeName System.Diagnostics.Stopwatch
+        foreach ($computer in $ComputerName)
+        {
+            $computerTimer.Start()
+            Write-Verbose -Message ('{0} : {1} : Begin execution' -f $cmdletName, $computer)
+            try
+            {
+                $sessionParams = @{ComputerName = $computer
+                                   ErrorAction  = 'Stop'}
+                if ($Credential -ne $null)
+                {
+                    Write-Verbose -Message ('{0} : {1} : Using specified credential' -f $cmdletName, $computer)
+                    $sessionParams.Add('Credential', $Credential)
+                }
+                else
+                {
+                    Write-Verbose -Message ('{0} : {1} : Using default credential' -f $cmdletName, $computer)
+                }
+
+                Write-Verbose -Message ('{0} : {1} : Creating PSSession' -f $cmdletName, $computer)
+                $session = New-PSSession @sessionParams
+                if ($session)
+                {
+                    Write-Verbose -Message ('{0} : {1} : Changing Recycle Bin name to {2}' -f $cmdletName, $computer, $NewName)
+                    $result = Invoke-Command -Session $session -ArgumentList $NewName -ScriptBlock {
+                        try
+                        {
+                            $regParams = @{Path        = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CLSID\{645FF040-5081-101B-9F08-00AA002F954E}'
+                                           Name        = '(default)'
+                                           Value       = $args[0]
+                                           Force       = $true
+                                           ErrorAction = 'Stop'}
+                            Set-ItemProperty @regParams
+                            Get-Process -Name explorer | Stop-Process -Force
+                            Write-Output $true
+                        }
+                        catch
+                        {
+                            Write-Output $false
+                        }
+                    }
+
+                    New-Object -TypeName psobject -Property @{ComputerName      = $computer
+                                                              NewRecycleBinName = $NewName
+                                                              Success           = $result} |
+                        Write-Output
+
+                    Write-Verbose -Message ('{0} : {1} : Removing PSSession' -f $cmdletName, $computer)
+                    Remove-PSSession -Session $session
+                }
+                else
+                {
+                    $Global:error[0] | Write-Error
+                }
+            }
+            catch
+            {
+                throw
+            }
+            $computerTimer.Stop()
+            Write-Verbose -Message ('{0} : {1} : End execution. {2} ms' -f $cmdletName, $computer, $computerTimer.ElapsedMilliseconds)
+            $computerTimer.Reset()
+        }
+
+        try
+        {
+            $param = @{Path        = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CLSID\{645FF040-5081-101B-9F08-00AA002F954E}'
+                       Name        = '(default)'
+                       Value       = $NewName
+                       ErrorAction = 'Stop'}
+        }
+        catch
+        {
+
+        }
+    }
+
+    end
+    {
+        $timer.Stop()
+        Write-Verbose -Message ('{0} : End execution' -f $cmdletName)
+        Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
+    }
+}
