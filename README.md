@@ -1,11 +1,16 @@
+
 # PowerShell-d00m
 PowerShell module that doesn't really do much that would be considered directly **helpful**... but is entirely awesome.
 
 ## Get-d00mExcuse
 User: "Why is the network slow?"
+
 Admin: **Runs Get-d00mExcuse** "Ah yes, because of a 'Total Configuration Destruction'"
+
 User: "Sounds serious..."
+
 Admin: "Yes it is. Partly because of the **Runs Get-d00mExcuse** 'Serial Stack Lockout' you might've caused earlier this week."
+
 Get [BOFH](https://en.wikipedia.org/wiki/Bastard_Operator_From_Hell)-style excuses all to your (small and miserable) hearts content!
 
 ## New-d00mColorFlood
