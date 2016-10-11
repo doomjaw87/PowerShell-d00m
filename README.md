@@ -1,5 +1,5 @@
-
 # PowerShell-d00m
+[![Build status](https://ci.appveyor.com/api/projects/status/bygmowboomxrg1e3?svg=true)](https://ci.appveyor.com/project/doomjaw87/powershell-d00m)
 PowerShell module that doesn't really do much that would be considered directly **helpful**... but is entirely awesome.
 
 ## Get-d00mExcuse
