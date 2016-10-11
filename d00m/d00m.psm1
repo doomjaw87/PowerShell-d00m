@@ -248,8 +248,8 @@ function Get-d00mSayThings
             {
                 $props.Add('Success', $false)
             }
-            $obj = New-Object -TypeName psobject -Property $props
-            Write-Output -InputObject $obj
+            New-Object -TypeName psobject -Property $props |
+                Write-Output
         }
     }
 
@@ -1533,5 +1533,158 @@ function Switch-d00mMouseButton
         $timer.Stop()
         Write-Verbose -Message ('{0} : End execution' -f $cmdletName)
         Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.ElapsedMilliseconds)
+    }
+}
+
+
+<#
+.SYNOPSIS
+    Enable firewall rule groups
+
+.DESCRIPTION
+    Use netsh to enable remote administration firewall rule groups:
+    - Remote Desktop
+    - File and Printer Sharing
+    - Performance Logs and Alerts
+    - Remote Event Log Management
+    - Remote Scheduled Task Management
+    - Remote Volume Management
+    - Windows Firewall Remote Managment
+    - Windows Management Instrumentation (WMI)
+
+.PARAMETER ComputerName
+    The computer to enable remote administration firewall rule groups
+
+.PARAMETER RuleGroup
+    The rule group display name to enable
+
+.PARAMETER Credential
+    The credential to use when establishing a remote PSSession. Leave blank to use default credentials
+
+.EXAMPLE
+    Enable-d00mFirewallRuleGroup -ComputerName computer1, computer2 -RuleGroup 'File and Printer Sharing'
+
+    This example establishes a remote PSSession to the computers computer1 and computer2 and runs netsh
+    to enable the specified rule group, File and Printer Sharing, using default credentials
+
+.EXAMPLE
+    (Get-AdComputer -Filter {(Enabled -eq 'true') -and (OperatingSystem -like '*windows*')}).Name | Enable-d00mFirewallRuleGroup -RuleGroup 'Windows Management Instrumentation (WMI)'
+
+    This example establishes a remote PSSession to the computers returned from the Get-AdComputer cmdlet 
+    and runs netsh to enable the specified rule group, Windows Management Instrumentation (WMI), using default 
+    credentials
+
+.EXAMPLE
+    $creds = (Get-Credential)
+    Enable-d00mFirewallRuleGroup -ComputerName 'Server1', 'Server2', 'Server3' -RuleGroup 'Remote Scheduled Task Management' -Credential $creds
+
+    This example establishes a remote PSSession to the computers specified- Server1, Server2, and Server3-
+    and runs netsh to enable the specified rule group, Remote Scheduled Task Management, using the specified
+    credentials
+#>
+function Enable-d00mFirewallRuleGroup
+{
+    [CmdletBinding()]
+    param
+    (
+        [alias('name')]
+        [parameter(ValueFromPipeline,
+                   ValueFromPipelineByPropertyName,
+                   Mandatory)]
+        [string[]]$ComputerName,
+
+        [ValidateSet('Remote Desktop',
+                     'File and Printer Sharing',
+                     'Remote Service Management',
+                     'Performance Logs and Alerts',
+                     'Remote Event Log Management',
+                     'Remote Scheduled Task Management',
+                     'Remote Volume Management',
+                     'Windows Firewall Remote Management',
+                     'Windows Management Instrumentation (WMI)')]
+        [parameter(Mandatory)]
+        [string[]]$RuleGroup,
+
+        [parameter()]
+        [pscredential]$Credential
+    )
+
+    begin
+    {
+        $timer = New-Object -TypeName System.Diagnostics.StopWatch
+        $cmdletName = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-Verbose -Message ('{0} : Begin execution : {1}' -f $cmdletName, (Get-Date))
+        $timer.Start()
+    }
+
+    process
+    {
+        $computerTimer = New-Object -TypeName System.Diagnostics.Stopwatch
+        foreach ($computer in $ComputerName)
+        {
+            $computerTimer.Start()
+            Write-Verbose -Message ('{0} : {1} : Begin execution' -f $cmdletName, $computer)
+            try
+            {
+                Write-Verbose -Message ('{0} : {1} : Creating PSSession' -f $cmdletName, $computer)
+                $sessionParams = @{ComputerName = $computer
+                                   ErrorAction  = 'Continue'}
+                if ($Credential -ne $null)
+                {
+                    $sessionParams.Add('Credential', $Credential)
+                    Write-Verbose -Message ('{0} : {1} : Using specified credential' -f $cmdletName, $computer)
+                }
+                else
+                {
+                    Write-Verbose -Message ('{0} : {1} : Using default credential' -f $cmdletName, $computer)
+                }
+                $session = New-PSSession @sessionParams
+
+                if ($session)
+                {
+                    foreach ($rule in $RuleGroup)
+                    {
+                        Write-Verbose -Message ('{0} : {1} : Enabling {2} Firewall rule group' -f $cmdletName, $computer, $rule)
+                        $result = Invoke-Command -Session $session -ArgumentList $rule -ScriptBlock {
+                            try
+                            {
+                                Start-Process -FilePath netsh.exe -ArgumentList ('advfirewall firewall set rule group="{0}" new enable=yes' -f $args[0])
+                                Write-Output $true
+                            }
+                            catch
+                            {
+                                Write-Output $false
+                            }
+                        }
+
+                        New-Object -TypeName psobject -Property @{ComputerName = $computer
+                                                                  RuleGroup    = $rule
+                                                                  Success      = $result} |
+                            Write-Output
+                    }
+                    Write-Verbose -Message ('{0} : {1} : Removing PSSession' -f $cmdletName, $computer)
+                    Remove-PSSession -Session $session
+                }
+                else
+                {
+                    $error[0] | Write-Error
+                }
+            }
+            catch
+            {
+                throw
+            }
+
+            $computerTimer.Stop()
+            Write-Verbose -Message ('{0} : {1} : End execution. {2} ms' -f $cmdletName, $computer, $computerTimer.ElapsedMilliseconds)
+            $computerTimer.Reset()
+        }
+    }
+
+    end
+    {
+        $timer.Stop()
+        Write-Verbose -Message ('{0} : End execution' -f $cmdletName)
+        Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
     }
 }
