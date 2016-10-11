@@ -411,11 +411,7 @@ function New-d00mPassword
         #Password length
         [parameter()]
         [ValidateScript({$_ -gt 0})]
-        [int]$Length = 10,
-
-        #Write output as secure string
-        [parameter()]
-        [switch]$AsSecureString
+        [int]$Length = 10
     )
 
     begin
@@ -444,16 +440,7 @@ function New-d00mPassword
             $password.Append(($ascii | Get-Random)) | Out-Null
             $counter++
         }
-
-        if ($AsSecureString)
-        {
-            $password.ToString() | 
-                Write-Output
-        }
-        else
-        {
-            Write-Output $password.ToString()
-        }
+        $password.ToString() | Write-Output
     }
 
     end
@@ -1464,17 +1451,24 @@ function Disable-d00mRdp
 
 <#
 .SYNOPSIS
+    Switch mouse buttons
 
 .DESCRIPTION
+    Switch mouse buttons between left- and right-handed operations
     
-.EXAMPLE
+.PARAMETER Hand
+    Left or right, for left or right operations respectively
 
 .EXAMPLE
+    Switch-d00mMouseButton -Hand Left
+
+    This example will set the mouse operation to left-handed mode
 
 .EXAMPLE
+    Switch-d00mMouseButton -Hand Right
 
+    This example will set the mouse operationg to right-handed mode
 #>
-
 function Switch-d00mMouseButton
 {
     [CmdletBinding()]
@@ -1494,36 +1488,43 @@ function Switch-d00mMouseButton
 
     process
     {
-        [Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null
-        $swapButtons = Add-Type -MemberDefinition '
-        [DllImport("user32.dll")]
-        public static extern bool SwapMouseButton(bool swap);' -Name "NativeMethods" -Namespace "PInvoke" -PassThru
-
-        switch ($Hand)
+        try
         {
-            'Left'
-            {
-                if ([bool][System.Windows.Forms.SystemInformation]::MouseButtonsSwapped -eq $false)
-                {
-                    $swapButtons::SwapMouseButton($true) | Out-Null
-                }
-                else
-                {
-                    Write-Warning -Message ('{0} : Mouse buttons already left-handed' -f $cmdletName)
-                }
-            }
+            [Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null
+            $swapButtons = Add-Type -MemberDefinition '
+            [DllImport("user32.dll")]
+            public static extern bool SwapMouseButton(bool swap);' -Name "NativeMethods" -Namespace "PInvoke" -PassThru
 
-            'Right'
+            switch ($Hand)
             {
-                if ([bool][System.Windows.Forms.SystemInformation]::MouseButtonsSwapped -eq $true)
-                { 
-                    $swapButtons::SwapMouseButton($false) | Out-Null
-                }
-                else
+                'Left'
                 {
-                    Write-Warning -Message ('{0} : Mouse buttons already right-handed' -f $cmdletName)
+                    if ([bool][System.Windows.Forms.SystemInformation]::MouseButtonsSwapped -eq $false)
+                    {
+                        $swapButtons::SwapMouseButton($true) | Out-Null
+                    }
+                    else
+                    {
+                        throw ('{0} : Mouse buttons already left-handed' -f $cmdletName)
+                    }
+                }
+
+                'Right'
+                {
+                    if ([bool][System.Windows.Forms.SystemInformation]::MouseButtonsSwapped -eq $true)
+                    { 
+                        $swapButtons::SwapMouseButton($false) | Out-Null
+                    }
+                    else
+                    {
+                        throw ('{0} : Mouse buttons already right-handed' -f $cmdletName)
+                    }
                 }
             }
+        }
+        catch
+        {
+            throw
         }
     }
 
