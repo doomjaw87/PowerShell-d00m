@@ -1848,3 +1848,57 @@ function Rename-d00mRecycleBin
         Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
     }
 }
+
+
+
+<#
+.SYNOPSIS
+    Get League of Legends champions
+
+.DESCRIPTION
+    Get free-to-play League of Legends champions from
+    http://freechampionrotation.com
+
+.EXAMPLE
+    Get-d00mLoLFreeChampions
+
+    This example will invoke a web request to http://freechampionrotation.com
+    and pull the current rotation's free to play champions
+#>
+function Get-d00mLoLFreeChampions
+{
+    [CmdletBinding()]
+    param
+    (
+
+    )
+
+    begin
+    {
+        $timer = New-Object -TypeName System.Diagnostics.StopWatch
+        $cmdletName = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-Verbose -Message ('{0} : Begin execution : {1}' -f $cmdletName, (Get-Date))
+        $timer.Start()
+    }
+
+    process
+    {
+        Write-Verbose -Message ('{0} : Getting URI content' -f $cmdletName)
+        $championRotation = New-Object -TypeName System.Collections.ArrayList
+        (Invoke-WebRequest -Uri http://freechampionrotation.com/ -UseBasicParsing).Images.OuterHtml | ForEach-Object {
+            $championRotation.Add($_.Split('"')[3]) | Out-Null
+        }
+
+        Write-Verbose -Message ('{0} : Generating unique champion array' -f $cmdletName)
+        $championRotation | Select-Object -Unique | ForEach-Object {
+            $_ | Write-Output
+        }
+    }
+
+    end
+    {
+        $timer.Stop()
+        Write-Verbose -Message ('{0} : End execution' -f $cmdletName)
+        Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
+    }
+}
