@@ -1902,3 +1902,17 @@ function Get-d00mLoLFreeChampions
         Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
     }
 }
+
+
+function Get-d00mLocalTime
+{
+    param
+    (
+        [parameter(mandatory, position=0)]
+        [string]$UTCTime
+    )
+
+    $tz = [System.TimeZoneInfo]::FindSystemTimeZoneById($((Get-CimInstance -ClassName Win32_TimeZone).StandardName))
+    $localTime = [System.TimeZoneInfo]::ConvertTimeFromUtc($UTCTime, $tz)
+    $localTime.ToString('HH:mm:ss dd-MMM-yyyy')
+}
