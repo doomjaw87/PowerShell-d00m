@@ -111,10 +111,3 @@ Describe "Switch-d00mMouseButton" {
             Should Not Throw
     }
 }
-
-Describe "Rename-d00mRecycleBin" {
-    It "Throws with invalid computer name" {
-        {Rename-d00mRecycleBin -ComputerName failure -NewName 'Failure'} |
-            Should throw
-    }
-}

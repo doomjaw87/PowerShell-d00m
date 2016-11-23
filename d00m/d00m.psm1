@@ -1916,3 +1916,66 @@ function Get-d00mLocalTime
     $localTime = [System.TimeZoneInfo]::ConvertTimeFromUtc($UTCTime, $tz)
     $localTime.ToString('HH:mm:ss dd-MMM-yyyy')
 }
+
+
+function Get-d00mBingRewardPoints
+{
+    [cmdletbinding(DefaultParameterSetName = 'edge')]
+    param
+    (
+        [parameter(ParameterSetName='chrome')]
+        [switch]$Chrome,
+
+        [parameter(ParameterSetName='firefox')]
+        [switch]$FireFox,
+
+        [parameter(ParameterSetName='edge')]
+        [switch]$Edge,
+
+        [parameter(ParameterSetName='iexplore')]
+        [switch]$InternetExplorer
+    )
+
+    Add-Type -AssemblyName System.Web | Out-Null
+    try
+    {
+        [xml]$result = Invoke-WebRequest -Uri http://www.google.com/trends/hottrends/atom/feed?pn=p1 -UseBasicParsing
+        $result.rss.channel.item.title | ForEach-Object {
+            $q = [System.Web.HttpUtility]::UrlEncode($_)
+            $url = 'https://www.bing.com/search?q={0}' -f $q
+            $params = switch ($PSCmdlet.ParameterSetName)
+            {
+                'chrome'
+                {
+                    $params = @{FilePath     = 'chrome.exe'
+                                ArgumentList = $url}
+                    Start-Process @params
+                }
+
+                'firefox' 
+                {
+                    $params = @{FilePath     = 'firefox.exe'
+                                ArgumentList = ('-url {0}' -f $url)}
+                    Start-Process @params
+                }
+
+                'edge'
+                {
+                    Start microsoft-edge:$url
+                }
+
+                'iexplore'
+                {
+                    $params = @{FilePath     = 'iexplore.exe'
+                                ArgumentList = $url}
+                    Start-Process @params
+                }
+            }
+            Start-Sleep -Seconds 3
+        }
+    }
+    catch
+    {
+        throw
+    }
+}
