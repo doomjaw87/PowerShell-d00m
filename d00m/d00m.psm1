@@ -1979,3 +1979,29 @@ function Get-d00mBingRewardPoints
         throw
     }
 }
+
+
+function Get-d00mModuleDownloadCount
+{
+    [cmdletbinding()]
+    param
+    (
+        [ValidateSet('d00m','d00mReport')]
+        [parameter(Mandatory=$true)]
+        [string[]]$Module
+    )
+    try
+    {
+        foreach ($m in $Module)
+        {
+            $mod = (Find-Module -Name $m).additionalmetadata
+            New-Object -TypeName System.Management.Automation.PSObject -Property @{Module        = $m
+                                                                                   DownloadCount = $mod.downloadCount} |
+                Write-Output
+        }
+    }
+    catch
+    {
+        throw
+    }
+}
