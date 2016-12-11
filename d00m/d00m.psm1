@@ -2005,3 +2005,31 @@ function Get-d00mModuleDownloadCount
         throw
     }
 }
+
+
+
+function Set-d00mMultipleDisplayType
+{
+    [cmdletbinding()]
+    param
+    (
+        [ValidateSet('Clone', 'Extend')]
+        [parameter(Mandatory=$true)]
+        [string]$Type
+    )
+    try
+    {
+        $params = @{Path     = $(Join-Path -Path $env:TEMP -ChildPath ('{0}.bat' -f $Type))
+                    ItemType = 'File'
+                    Value    = ('call displayswitch.exe/{0}' -f $Type)
+                    Force    = $true}
+        New-Item @params | Out-Null
+        $null = Invoke-Item -Path $params.Path
+        Start-Sleep -Seconds 2
+        Remove-Item -Path $params.Path
+    }
+    catch
+    {
+        throw
+    }
+}
