@@ -2033,3 +2033,145 @@ function Set-d00mMultipleDisplayType
         throw
     }
 }
+
+
+function New-d00mPowerShelProfile
+{
+    [cmdletbinding()]
+    param
+    (
+        [parameter(Mandatory = $true)]
+        [ValidateSet('Console', 'ISE')]
+        [string[]]$Profile
+    )
+
+    begin
+    {
+        $timer = New-Object -TypeName System.Diagnostics.StopWatch
+        $cmdletName = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-Verbose -Message ('{0} : Begin execution : {1}' -f $cmdletName, (Get-Date))
+        $timer.Start()
+
+$consoleProfile = @'
+$host.UI.RawUI.BackgroundColor = [System.ConsoleColor]::Black
+$host.UI.RawUI.ForegroundColor = [System.ConsoleColor]::DarkGray
+
+if ((New-Object -Type Security.Principal.WindowsPrincipal ([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))
+{
+    $host.ui.RawUI.WindowTitle = 'y o u a r e n o t a l o n e'
+}
+else
+{
+    $host.ui.RawUI.WindowTitle = 'y o u a r e n o t a l o n e - A D M I N'
+}
+Clear-Host
+
+
+Write-Host '   ---=== d00m ===---' -ForegroundColor Green
+Get-Command -Module d00m | Select-Object -ExpandProperty Name |
+    Write-Host -ForegroundColor DarkGray
+Write-Host ' '
+
+
+Set-Location ~\Documents
+
+function Get-d00mRandomConsoleColor
+{
+    switch (Get-Random -Minimum 2 -Maximum 15)
+    {
+        2  {'DarkGreen'}
+        3  {'DarkCyan'}
+        4  {'DarkRed'}
+        5  {'DarkMagenta'}
+        6  {'DarkYellow'}
+        7  {'Gray'}
+        8  {'DarkGray'}
+        9  {'Blue'}
+        10 {'Green'}
+        11 {'Cyan'}
+        12 {'Red'}
+        13 {'Magenta'}
+        14 {'Yellow'}
+    }
+}
+
+function prompt
+{
+    ('ps {0} ' -f $pwd) | Write-Host -NoNewline
+    Write-Host '>> ' -ForegroundColor (Get-d00mRandomConsoleColor) -NoNewline
+    return ' '
+}
+'@
+$iseProfile = @'
+
+'@
+    }
+
+    process
+    {
+        if ($Profile -contains 'Console')
+        {
+            try
+            {
+                Write-Verbose -Message ('{0} : Executing Console profile' -f $cmdletName)
+                if (Test-Path ~\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1)
+                {
+                    Write-Verbose -Message ('{0} : Previous Console profile exists... archiving...' -f $cmdletName)
+                    $params = @{Path        = '~\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1'
+                                Destination = ('~\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1.{0}' -f (Get-Date -Format 'yyyyMMddHHmmss'))
+                                Force       = $true
+                                ErrorAction = 'Stop'}
+                    Move-Item @params
+                }
+                Write-Verbose -Message ('{0} : Creating new console profile...' -f $cmdletName)
+                $params = @{Path        = '~\Documents\WindowsPowerShell'
+                            Name        = 'Microsoft.PowerShell_Profile.ps1'
+                            ItemType    = 'File'
+                            Value       = $consoleProfile
+                            ErrorAction = 'Stop'}
+                New-Item @params | Out-Null
+                Write-Verbose -Message ('{0} : Console profile execution complete' -f $cmdletName)
+            }
+            catch
+            {
+                throw
+            }
+        }
+
+        if ($Profile -contains 'ISE')
+        {
+            try
+            {
+                Write-Verbose -Message ('{0} : Executing ISE profile' -f $cmdletName)
+                if (Test-Path ~\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1)
+                {
+                    Write-Verbose -Message ('{0} : Previous ISE profile exists... archiving...' -f $cmdletName)
+                    $params = @{Path        = '~\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1'
+                                Destination = ('~\Documents\WindowsPowerShell\Microsoft.PowerShellISE_profile.ps1.{0}' -f (Get-Date -Format 'yyyyMMddHHmmss'))
+                                Force       = $true
+                                ErrorAction = 'Stop'}
+                    Move-Item @params
+                }
+                Write-Verbose -Message ('{0} : Creating new ISE profile...' -f $cmdletName)
+                $params = @{Path        = '~\Documents\WindowsPowerShell'
+                            Name        = 'Microsoft.PowerShellISE_Profile.ps1'
+                            ItemType    = 'File'
+                            Value       = $iseProfile
+                            ErrorAction = 'Stop'}
+                New-Item @params | Out-Null
+                Write-Verbose -Message ('{0} : ISE profile execution complete' -f $cmdletName)
+            }
+            catch
+            {
+                throw
+            }
+        }
+    }
+
+    end
+    {
+        $timer.Stop()
+        Write-Verbose -Message ('{0} : End execution' -f $cmdletName)
+        Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
+    }
+}
