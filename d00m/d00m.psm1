@@ -2035,7 +2035,8 @@ function Set-d00mMultipleDisplayType
 }
 
 
-function New-d00mPowerShelProfile
+
+function New-d00mPowerShellProfile
 {
     [cmdletbinding()]
     param
@@ -2165,6 +2166,100 @@ $iseProfile = @'
             {
                 throw
             }
+        }
+    }
+
+    end
+    {
+        $timer.Stop()
+        Write-Verbose -Message ('{0} : End execution' -f $cmdletName)
+        Write-Verbose -Message ('Total execution time: {0} ms' -f $timer.Elapsed.TotalMilliseconds)
+    }
+}
+
+
+
+<#
+.SYNOPSIS
+    Download Putty
+
+.DESCRIPTION
+    Download the x64 or x86 version of the latest version of Putty to a 
+    specified file path location
+
+.EXAMPLE
+    Save-d00mPutty -FilePath C:\
+    
+    This example will determine if you need the x86 or x64 version of Putty
+    and save the executable file to c:\putty.exe
+
+.EXAMPLE
+    Save-d00mPutty -FilePath C:\users\Me\NewFolder -Force
+
+    This example will determine if you need the x86 or x64 version of Putty
+    and save the executable file to c:\users\Me\NewFolder. If NewFolder doesn't
+    exist, the cmdlet will create the folder for you
+#>
+function Save-d00mPutty
+{
+    [cmdletbinding()]
+    param
+    (
+        [parameter(Mandatory = $true)]
+        [string]$FilePath,
+
+        [parameter()]
+        [switch]$Force
+    )
+
+    begin
+    {
+        $timer = New-Object -TypeName System.Diagnostics.StopWatch
+        $cmdletName = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-Verbose -Message ('{0} : Begin execution : {1}' -f $cmdletName, (Get-Date))
+        $timer.Start()
+    }
+
+    process
+    {
+        try
+        {
+            if (Test-Connection google.com -Count 1)
+            {
+                Write-Verbose -Message ('{0} : Creating destination filepath : {1}' -f $cmdletName, $FilePath)
+                If (!(Test-Path -Path $FilePath) -and ($Force))
+                {
+                    New-Item -Path $FilePath -ItemType Directory -Force | Out-Null
+                    Write-Verbose -Message ('{0} : Created destination filepath complete' -f $cmdletName)
+                }
+                Write-Verbose -Message ('{0} : Detecting operating system architecture' -f $cmdletName)
+                $uri = switch ((Get-WmiObject -Class Win32_OperatingSystem -Property OSArchitecture).OSArchitecture)
+                {
+                    '32-bit'
+                    {
+                        Write-Verbose -Message ('{0} : Detected x86 operating system' -f $cmdletName)
+                        'https://the.earth.li/~sgtatham/putty/latest/w32/putty.exe'
+                    }
+
+                    '64-bit'
+                    {
+                        Write-Verbose -Message ('{0} : Detected x64 operating system' -f $cmdletName)
+                        'https://the.earth.li/~sgtatham/putty/latest/w64/putty.exe'
+                    }
+                }
+                Write-Verbose -Message ('{0} : Download URL : {1}' -f $cmdletName, $uri)
+                Invoke-WebRequest -Uri $uri -OutFile (Join-Path -Path $FilePath -ChildPath 'putty.exe')
+                Write-Verbose -Message ('{0} : Download complete' -f $cmdletName)
+                '{0} : Download complete. FilePath : {1}\putty.exe' -f $cmdletName, $FilePath | Write-Output
+            }
+            else
+            {
+                'No access to internet! Unable to download Putty!' | Write-Warning
+            }
+        }
+        catch
+        {
+            throw
         }
     }
 
